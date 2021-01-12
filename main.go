@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/LakshyaNegi/golang_microservices_example/handlers"
 )
 
 func main() {
