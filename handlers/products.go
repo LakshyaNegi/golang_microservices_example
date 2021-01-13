@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -68,10 +69,10 @@ func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 
 	prod := r.Context().Value(KeyProduct{}).(data.Product)
 
-	err := prod.FromJSON(r.Body)
-	if err != nil {
-		http.Error(rw, "Unable to unmarshal products", http.StatusInternalServerError)
-	}
+	// err := prod.FromJSON(r.Body)
+	// if err != nil {
+	// 	http.Error(rw, "Unable to unmarshal products", http.StatusInternalServerError)
+	// }
 
 	p.l.Printf("PROD %#v", prod)
 
@@ -107,10 +108,17 @@ func (p Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 
 		err := prod.FromJSON(r.Body)
 		if err != nil {
-			http.Error(rw, "Unable to unmarshal products", http.StatusInternalServerError)
+			http.Error(rw, fmt.Sprint("e", err), http.StatusInternalServerError)
+			return
 		}
 
-		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
+		err = prod.Validate()
+		if err != nil {
+			http.Error(rw, "Unable to validate product", http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), KeyProduct{}, *prod)
 		req := r.WithContext(ctx)
 
 		next.ServeHTTP(rw, req)
