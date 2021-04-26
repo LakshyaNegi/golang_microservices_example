@@ -9,18 +9,27 @@ import (
 	"time"
 
 	"github.com/LakshyaNegi/golang_microservices_example/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 
 	l := log.New(os.Stdout, "api", log.LstdFlags)
 
-	hh := handlers.NewHello(l)
-	gh := handlers.NewGoodbye(l)
+	ph := handlers.NewProduct(l)
 
-	sm := http.NewServeMux()
-	sm.Handle("/", hh)
-	sm.Handle("/goodbye", gh)
+	sm := mux.NewRouter()
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
+
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.Use(ph.MiddlewareProductValidation)
+
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareProductValidation)
+	//sm.Handle("/products", ph)
 
 	s := &http.Server{
 		Addr:         ":9090",
